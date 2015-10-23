@@ -1,11 +1,5 @@
 # Ochograph
-Ochograph allows to generate dependency graphs of your Ochopod clusters.
-
-This little tool will draw a dependency graph of your Ochopod cluster(s), showing what pods depend on what other pods.
-
-The idea is that this can be useful for documenting your systems infrastructure. 
-
-The tool will first get the list of all pods from Zookeper and then get the necessary details for each pod by leveraging its REST API.
+Ochograph allows to generate dependency graphs of your <a href="https://github.com/autodesk-cloud/ochopod" target="_blank">Ochopod</a> clusters, which is a great way of documenting your environment (<a href="https://en.wikipedia.org/wiki/A_picture_is_worth_a_thousand_words" target="_blank">"a picture is worth a thousands words"</a>). 
 
 ## Pre-requesites
 For this tool to work, every single pod that has dependencies (i.e. the 'depends_on' variable of the Reactive class is not empty) must list its dependencies as a list of "<cluster_name>:<port>" under the 'dependsOn' key, e.g.:
@@ -30,6 +24,8 @@ Also, Zookeeper and the pods must be accessible (i.e. no firewall).
 Ochograph will try to guess the Zookeeper host(s) by reading the /etc/mesos/zk file. You can force a given Zookeeper host with the -z paramater, e.g. python ochograph.py -z 127.0.0.1:2181
 
 ## Result
+For now, the result is raw text only, but image formats like PNG will likely be supported in the near future.
+
 You will see something like this (very simple cluster here):
 
 ```
