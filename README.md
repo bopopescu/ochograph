@@ -2,7 +2,7 @@
 Ochograph allows to generate dependency graphs of your <a href="https://github.com/autodesk-cloud/ochopod" target="_blank">Ochopod</a> clusters, which is a great way of documenting your environment (<a href="https://en.wikipedia.org/wiki/A_picture_is_worth_a_thousand_words" target="_blank">"a picture is worth a thousands words"</a>). 
 
 ## Pre-requesites
-For this tool to work, every single pod that has dependencies (i.e. the 'depends_on' variable of the Reactive class is not empty) must list its dependencies as a list of "&lt;cluster_name&gt;:&lt;port&gt;" under the 'dependsOn' key, e.g.:
+For this tool to work, every single pod that has dependencies (i.e. the 'depends_on' variable of the Reactive class is not empty) must list its dependencies as a list of "&lt;cluster_name&gt;:&lt;port&gt;" under the 'dependsOn' key of the JSON returned by the sanity_check method, e.g.:
 
 ```
 def sanity_check(self, pid):
