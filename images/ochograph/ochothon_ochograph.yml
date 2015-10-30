@@ -1,0 +1,17 @@
+cluster:  ochograph
+image:    autodeskls/ochograph:1.0.6_20151029154900CET_0.1
+debug:    true
+ports:
+  # Ochograph will be accessible on port 8080
+  - 9000 8080
+
+verbatim:
+  cpu: 1
+  mem: 128
+  # TODO to download private images
+  #uris:
+  #  - "file:///home/core/.dockercfg"
+
+  # TODO
+  #acceptedResourceRoles:
+  #  - slave_public
