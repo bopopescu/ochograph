@@ -567,7 +567,30 @@ if __name__ == '__main__':
                 while True:
                     file_name = "ochograph_" + id_generator() + ".png"
                     if not os.path.exists(file_name):
-                        return file_name                       
+                        return file_name  
+                
+            # Thanks to http://patorjk.com/software/taag
+            def write_nice_title(self):
+                self.wfile.write("<a href=\"/\" class=\"noLinkDeco\"><div class=\"title\">");
+                """
+                self.wfile.write(self.escape_html("    ____       _                                 _         \n"));
+                self.wfile.write(self.escape_html("   / __ \     | |                               | |        \n"));
+                self.wfile.write(self.escape_html("  | |  | | ___| |__   ___   __ _ _ __ __ _ _ __ | |__      \n"));
+                self.wfile.write(self.escape_html("  | |  | |/ __| '_ \ / _ \ / _` | '__/ _` | '_ \| '_ \     \n"));
+                self.wfile.write(self.escape_html("  | |__| | (__| | | | (_) | (_| | | | (_| | |_) | | | |    \n"));
+                self.wfile.write(self.escape_html("   \____/ \___|_| |_|\___/ \__, |_|  \__,_| .__/|_| |_|    \n"));
+                self.wfile.write(self.escape_html("                            __/ |         | |              \n"));
+                self.wfile.write(self.escape_html("                           |___/          |_|              \n"));
+                """
+                
+                self.wfile.write(self.escape_html("   ____       __                                 __    \n"));
+                self.wfile.write(self.escape_html("  / __ \_____/ /_  ____  ____ __________ _____  / /_   \n"));
+                self.wfile.write(self.escape_html(" / / / / ___/ __ \/ __ \/ __ `/ ___/ __ `/ __ \/ __ \  \n"));
+                self.wfile.write(self.escape_html("/ /_/ / /__/ / / / /_/ / /_/ / /  / /_/ / /_/ / / / /  \n"));
+                self.wfile.write(self.escape_html("\____/\___/_/ /_/\____/\__, /_/   \__,_/ .___/_/ /_/   \n")); 
+                self.wfile.write(self.escape_html("                      /____/          /_/              \n"));            
+                    
+                self.wfile.write("</div></a><br/>")                 
                 
             def do(self, method):
                 with_content = method != 'HEAD'
@@ -581,7 +604,9 @@ if __name__ == '__main__':
                             self.wfile.write('<link rel="stylesheet" type="text/css" href="css/style.css">')
                             self.wfile.write('</head>')
                             self.wfile.write("<body>")
-                            self.wfile.write("<span class=\"title\">Ochograph</span><br/><br/>")
+                            
+                            self.write_nice_title();
+                            
                             self.wfile.write("Visualize the dependencies and state of your Ochopod clusters in real-time.<br/><br/>")
                             self.wfile.write('<a href="/image">Image mode</a><br/>')
                             self.wfile.write('<a href="/text">Text mode</a>')
@@ -772,7 +797,8 @@ if __name__ == '__main__':
                                 if with_content:
                                     length = int(self.headers.getheader('content-length'))
                                     data = self.rfile.read(length)
-                                    self.wfile.write("<span class=\"title\">Ochograph</span><br/>")
+                                    
+                                    self.write_nice_title();
                                     
                                     image_file = None
                                     self.wfile.write("<span class=\"small\" title=\"Last time a check was made in the background to see if what you see is still up-to-date.\">Last check date: <span id=\"lastCheckDate\"></span></span><br/>")

@@ -11,6 +11,12 @@ a:hover {
     text-decoration: underline;
 }
 
+
+a.noLinkDeco {
+   text-decoration: none;
+   color: black; 
+}
+
 .okGreen {
     color: white;
     background-color: #00AA00;
@@ -22,7 +28,8 @@ a:hover {
 }
 
 .title {
-    font-size: 25px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 10px;
     font-weight: bold;
 }
 
@@ -42,6 +49,7 @@ a:hover {
 .textNodeLink {
     cursor: pointer;
 }
+
 
 .ui-widget-overlay.custom-overlay
 {
