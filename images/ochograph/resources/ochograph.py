@@ -31,6 +31,8 @@ import random
 import os
 import struct
 import cgi
+import BaseHTTPServer
+import urlparse
 
 from logging import DEBUG, Formatter
 from logging.handlers import RotatingFileHandler
@@ -38,6 +40,7 @@ from kazoo.client import KazooClient
 from threading import Thread
 from requests.exceptions import Timeout as HTTPTimeout
 from networkx.readwrite import json_graph
+from SocketServer import ThreadingMixIn
 
 
 ROOT_NODE = "ROOT" 
@@ -532,9 +535,6 @@ if __name__ == '__main__':
     
     if is_http:
         
-        import BaseHTTPServer
-        import urlparse
-        
         HOST_NAME = ''
         PORT_NUMBER = 9000
         
@@ -598,11 +598,11 @@ if __name__ == '__main__':
                                 result_json = {'graph': json_graph.node_link_data(the_graph), 'podsDetails': pods_details}                        
                                 self.wfile.write(json.dumps(result_json))
                         else:
-                            self.send_error(404, "File not found")
+                            self.send_error(404, "File not found: %s " % self.path)
                     elif self.path.startswith("/image/") and self.path.endswith(".png"):
                         image_name = self.path[self.path.rfind("/")+1:]
                         if not os.path.exists(image_name):
-                            self.send_error(404, "File not found")
+                            self.send_error(404, "File not found: %s " % self.path)
                         else:
                             self.send_response(200)
                             self.send_header("Content-type", 'image/png')
@@ -652,11 +652,11 @@ if __name__ == '__main__':
                                         
                                 
                             else:
-                                self.send_error(404, "File not found")
+                                self.send_error(404, "File not found: %s " % self.path)
                         # E.g. if the pod is not found.
                         except Exception:
                             logger.error('Error retrieving pod details', exc_info=True)
-                            self.send_error(404, "File not found")
+                            self.send_error(404, "File not found: %s " % self.path)
                     elif self.path.startswith('/pod/log'):
                         try:
                             up = urlparse.urlparse(self.path)
@@ -690,11 +690,11 @@ if __name__ == '__main__':
                                         
                                 
                             else:
-                                self.send_error(404, "File not found")
+                                self.send_error(404, "File not found: %s " % self.path)
                         # E.g. if the pod is not found.
                         except Exception:
                             logger.error('Error retrieving pod details', exc_info=True)
-                            self.send_error(404, "File not found")
+                            self.send_error(404, "File not found: %s " % self.path)
                     elif self.path.startswith('/text') or self.path.startswith('/image'):     
                         up = urlparse.urlparse(self.path)
                         if up.path == '/image' or up.path == '/text':                    
@@ -721,7 +721,7 @@ if __name__ == '__main__':
                                 self.wfile.write("<div id=\"theDialog\" style=\"display: none;\"></div>")                                               
                                 self.wfile.write("</body></html>")
                         else:
-                            self.send_error(404, "File not found")                           
+                            self.send_error(404, "File not found: %s " % self.path)                           
                     elif self.path == '/css/style.css':
                         self.send_response(200)
                         self.send_header("Content-type", "text/css")
@@ -756,9 +756,9 @@ if __name__ == '__main__':
                                 self.wfile.write(f.read())
                                 
                         else:
-                            self.send_error(404, "File not found")
+                            self.send_error(404, "File not found: %s " % self.path)
                     else:
-                        self.send_error(404, "File not found")
+                        self.send_error(404, "File not found: %s " % self.path)
                 elif method == 'POST':
                     ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
                     if ctype == 'application/json':
@@ -837,10 +837,10 @@ if __name__ == '__main__':
                                         
                                     self.wfile.write('<br/><br/><br/><span class="footer"><a href="https://github.com/pferrot/ochograph" target="_blank">Ochograph on GitHub</a></span><br/><br/>')                   
                             else:
-                                self.send_error(404, "File not found")
+                                self.send_error(404, "File not found: %s " % self.path)
                         # Not application/json
                         else:
-                            self.send_error(404, "File not found")
+                            self.send_error(404, "File not found: %s " % self.path)
                     
             def do_HEAD(self):
                 self.do('HEAD')
@@ -851,15 +851,23 @@ if __name__ == '__main__':
             def do_POST(self):
                 self.do('POST')
                 
-        
-        server_class = BaseHTTPServer.HTTPServer
-        httpd = server_class((HOST_NAME, PORT_NUMBER), MyHandler)
+            def log_error(self, form, *args):
+                logger.error(form % args)
+                
+            def log_message(self, form, *args):
+                #logger.debug(form % args)
+                pass
+                
+        class ThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
+            """Handle requests in a separate thread."""
+    
+        server = ThreadedHTTPServer((HOST_NAME, PORT_NUMBER), MyHandler)
         logger.info("Server Starts - %s:%s" % (HOST_NAME, PORT_NUMBER))
-        try:
-            httpd.serve_forever()
+        try:            
+            server.serve_forever()
         except KeyboardInterrupt:
             pass
-        httpd.server_close()
+        server.server_close()
         logger.info("Server Stops - %s:%s" % (HOST_NAME, PORT_NUMBER))
     
     else:
