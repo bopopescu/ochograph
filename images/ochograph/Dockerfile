@@ -34,7 +34,7 @@ RUN rm -rf /pygraphviz-1.3.1_src
 #
 ADD resources/pod /opt/ochograph/pod
 ADD resources/ochograph.py /opt/ochograph/
-ADD resources/style.css /opt/ochograph/
-ADD resources/javascript.js /opt/ochograph/
+ADD resources/css /opt/ochograph/css
+ADD resources/javascript /opt/ochograph/javascript
 ADD resources/supervisor /etc/supervisor/conf.d
 CMD /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf

@@ -5,33 +5,20 @@ Features:
 - Render dependency graph as text or image (PNG)
 - Visualize whether your pods are ON or OFF at first look
 - Identify circular dependencies
-- Web access or standalone mode
-
-## Pre-requesites
-Note that this pre-requesite will not be necessary anymore once/if <a href="https://github.com/autodesk-cloud/ochopod/pull/37" target="_blank">this pull request</a> is accepted.
-
-For now, every single pod must list its dependencies as a list of "&lt;cluster_name&gt;" under the 'dependsOn' key of the JSON returned by the sanity_check method, e.g.:
-
-```
-def sanity_check(self, pid):
-	# Will result in something like "mysql"
-	depends_on = cfg['db_cluster_name']
-
-	# Result would then be {'dependsOn': ["mysql"]}
-	return {'dependsOn': [depends_on]}
-```
+- Web or standalone mode
+- Dynamic reload
+- Easily view pods settings and logs (web mode only)
 
 ## Usage
 You can either access Ochograph with you browser or use it from the command line as a standalone program.
 
-### Web access
-Simply start Ochograph with the -h parameter:
+### Web mode
+Simply start Ochograph with the -w parameter:
 ```
-python ochograph.py -h
+python ochograph.py -w
 ```
 There is even a ready-to-use Ochopod/Docker image: deploy it into your Mesos/Marathon and you are good to go. See the Ochothon deployment descriptor file under /images/ochograph/ochothon_ochograph.yml
   
-
 ### Standalone mode
 Install all the necessary Python libraries and tools (refer to the Dockerfile under /images/ochograph).
 
@@ -52,8 +39,9 @@ python ochograph.py -z 127.0.0.1:2181
 
 ## Examples
 
-### Web access
+### Web mode
 ![Web mode](web_mode.png)
+![Web mode](web_mode_2.png)
 
 ### Standalone mode
 ![Standalone mode](standalone_mode.png)
