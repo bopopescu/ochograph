@@ -578,7 +578,7 @@ if __name__ == '__main__':
                         self.end_headers()
                         if with_content:
                             self.wfile.write("<html><head><title>Ochograph</title>")
-                            self.wfile.write('<link rel="stylesheet" type="text/css" href="style.css">')
+                            self.wfile.write('<link rel="stylesheet" type="text/css" href="css/style.css">')
                             self.wfile.write('</head>')
                             self.wfile.write("<body>")
                             self.wfile.write("<span class=\"title\">Ochograph</span><br/><br/>")
