@@ -262,22 +262,22 @@ def get_pods_details(is_local, output, hide_zookeeper_info, regex = "*", subset 
         elif what == 'info':
             pods_details = {(regex + ' #' + str(subset[0])): (34, {u'node': u'patwstmesosdev2.ecs.ads.autodesk.com', u'status': u'', u'task': u'ochopod.dev.cr-app-2015-10-22-12-17-23.a42b56ac-78b7-11e5-b252-065c340003c5', u'process': u'stopped', u'ip': u'10.41.91.123', u'public': u'', u'ports': {u'8085': 32214, u'8080': 32545}, u'metrics': {u'info': {u'leveraging': {u'penalties': {u'file': u'penaltiesDisabled.conf', u'noPenaltyPerfectMatches': True, u'penaltiesLines': [u'*.*.*.*.* -> *.*.*.*.* = 0', u'*.*.*.* -> *.*.*.* = 0', u'*.*.* -> *.*.* = 0', u'*.* -> *.* = 0', u'* -> * = 0']}, u'fuzzyMatching': {u'maxNbNgramMatches': 20000, u'nbNgramMatchesTolerance': 2}}, u'authenticationEnabled': True, u'leader': False}, u'uptime': u'11.52 hours (pid 214)'}, u'application': u'ochopod.dev.cr-app-2015-10-22-12-17-28', u'state': u'leader', u'port': u'8080', u'dependsOn': []}, 200)}
         elif what == 'log':
-            lines = ["2015-10-30 17:29:20,138 - DEBUG - model (reactive) : hash -> 97:e9:63:bb:16:69:39:42:ee:28:d1:87:f6:b1:40:f2",
-                      "2015-10-30 17:29:20,138 - INFO - model (reactive) : configuring (1 pods, i/o port 8080)",
-                      "2015-10-30 17:29:20,139 - DEBUG - control -> http://10.41.85.104:31545/control/check/60",
-                      "2015-10-30 17:29:20,139 - DEBUG - model (reactive) : -> /control/check (1 pods)",
-                      "2015-10-30 17:29:20,148 - DEBUG - http in -> /control/check",
-                      "2015-10-30 17:29:20,363 - WARNING - lifecycle (piped process) : failed to run the pre-check -> ..haproxy/pod/pod.py (62) -> AssertionError (need 1+ downstream listener)",
-                      "2015-10-30 17:29:20,364 - DEBUG - http out -> HTTP 406 (0 ms)",
-                      "2015-10-30 17:29:20,368 - DEBUG - control <- http://10.41.85.104:31545/control/check/60 (HTTP 406)",
-                      "2015-10-30 17:29:20,370 - WARNING - model (reactive) : configuration failed -> ..models/reactive.py (357) -> AssertionError (1+ pods failing the pre-check or unreachable)",
-                      "2015-10-30 17:29:21,137 - DEBUG - watcher (dev.cr-frontend) : change detected in dependency",
-                      "2015-10-30 17:29:21,376 - DEBUG - model (reactive) : pod update with no hash impact (did we just reconnect to zk ?)",
-                      "2015-10-30 21:25:41,462 - DEBUG - http in -> /info",
-                      "2015-10-30 21:25:45,480 - DEBUG - http in -> /info",
-                      "2015-10-30 21:25:46,848 - DEBUG - http in -> /info",
-                      "2015-10-30 21:25:55,128 - DEBUG - http in -> /info",
-                      "2015-11-02 08:21:58,081 - DEBUG - http in -> /log"]
+            lines = ["2015-10-30 17:29:20,138 - DEBUG - model (reactive) : hash -> 97:e9:63:bb:16:69:39:42:ee:28:d1:87:f6:b1:40:f2\n",
+                      "2015-10-30 17:29:20,138 - INFO - model (reactive) : configuring (1 pods, i/o port 8080)\n",
+                      "2015-10-30 17:29:20,139 - DEBUG - control -> http://10.41.85.104:31545/control/check/60\n",
+                      "2015-10-30 17:29:20,139 - DEBUG - model (reactive) : -> /control/check (1 pods)\n",
+                      "2015-10-30 17:29:20,148 - DEBUG - http in -> /control/check\n",
+                      "2015-10-30 17:29:20,363 - WARNING - lifecycle (piped process) : failed to run the pre-check -> ..haproxy/pod/pod.py (62) -> AssertionError (need 1+ downstream listener)\n",
+                      "2015-10-30 17:29:20,364 - DEBUG - http out -> HTTP 406 (0 ms)\n",
+                      "2015-10-30 17:29:20,368 - DEBUG - control <- http://10.41.85.104:31545/control/check/60 (HTTP 406)\n",
+                      "2015-10-30 17:29:20,370 - WARNING - model (reactive) : configuration failed -> ..models/reactive.py (357) -> AssertionError (1+ pods failing the pre-check or unreachable)\n",
+                      "2015-10-30 17:29:21,137 - DEBUG - watcher (dev.cr-frontend) : change detected in dependency\n",
+                      "2015-10-30 17:29:21,376 - DEBUG - model (reactive) : pod update with no hash impact (did we just reconnect to zk ?)\n",
+                      "2015-10-30 21:25:41,462 - DEBUG - http in -> /info\n",
+                      "2015-10-30 21:25:45,480 - DEBUG - http in -> /info\n",
+                      "2015-10-30 21:25:46,848 - DEBUG - http in -> /info\n",
+                      "2015-10-30 21:25:55,128 - DEBUG - http in -> /info\n",
+                      "2015-11-02 08:21:58,081 - DEBUG - http in -> /log\n"]
             pods_details = {u'dev.cr-app #31': (31, lines, 200)}
             return pods_details, output
     
@@ -625,7 +625,6 @@ if __name__ == '__main__':
                                 # it would always trigger a refresh even for no valid reason.
                                 try:
                                     for pod_details in pods_details.values():
-                                        print pod_details
                                         body = pod_details[1]
                                         if body.has_key('metrics'):
                                             metrics = body['metrics']
@@ -633,7 +632,6 @@ if __name__ == '__main__':
                                                 # Keep 'dependsOn' since we use it to generate the graph.
                                                 if the_key != 'dependsOn':
                                                     del metrics[the_key]
-                                        print pod_details
                                 except Exception:
                                     logger.error('Error removing uptime key from pod details', exc_info=True)
                                 result_json = {'graph': json_graph.node_link_data(the_graph), 'podsDetails': pods_details}                        
@@ -719,7 +717,6 @@ if __name__ == '__main__':
                                         lines = command_result.values()[0][1]                  
                                         for one_log in lines:
                                             self.wfile.write(self.escape_html(one_log));
-                                            self.wfile.write("<br/>");
                                     except Exception:
                                         logger.warn('Error reading logs', exc_info=True)
                                         self.wfile.write('N/A')
