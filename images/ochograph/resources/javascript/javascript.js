@@ -33,7 +33,7 @@ function nodeClicked(node) {
       cache: false
     })
     .done(function(html) {
-        $("#theDialog").empty().attr('title', node).append(html);
+        $("#theDialog").empty().append(html);
         // Once done retrieving the info, lets us get the logs.
         $.ajax({
           url: '/pod/log',
@@ -55,7 +55,8 @@ function nodeClicked(node) {
               },
               close: function() {
                 $('.ui-widget-overlay').removeClass('custom-overlay');
-              }
+              },
+              title: node
             });
         
         });
