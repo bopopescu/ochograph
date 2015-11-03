@@ -45,3 +45,15 @@ python ochograph.py -z 127.0.0.1:2181
 
 ### Standalone mode
 ![Standalone mode](standalone_mode.png)
+
+## Release notes
+
+### 0.2 (11/3/2015)
+- Get pods details (info and logs) in web mode by clicking the desired pod
+- Dynamic reload in web mode (no page reload): the graph is automatically updated when changes occur in the pods configuration (e.g. when pods are deployed, removed, sub-processed are started/stopped)
+- Multithreaded HTTP server 
+
+### 0.1 (10/30/2015)
+- First version with web and standalone modes
+- Generate graphs as text or image (PNG)
+- Show whether Ochopod sub-process is running or not
