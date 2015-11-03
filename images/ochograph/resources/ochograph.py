@@ -621,8 +621,23 @@ if __name__ == '__main__':
                             self.end_headers()
                             if with_content:
                                 the_graph, pods_details, output = get_graph()
+                                # Remove 'uptime' and all other metrics except 'dependsOn' here since 
+                                # it would always trigger a refresh even for no valid reason.
+                                try:
+                                    for pod_details in pods_details.values():
+                                        print pod_details
+                                        body = pod_details[1]
+                                        if body.has_key('metrics'):
+                                            metrics = body['metrics']
+                                            for the_key in metrics.keys():
+                                                # Keep 'dependsOn' since we use it to generate the graph.
+                                                if the_key != 'dependsOn':
+                                                    del metrics[the_key]
+                                        print pod_details
+                                except Exception:
+                                    logger.error('Error removing uptime key from pod details', exc_info=True)
                                 result_json = {'graph': json_graph.node_link_data(the_graph), 'podsDetails': pods_details}                        
-                                self.wfile.write(json.dumps(result_json))
+                                self.wfile.write(json.dumps(result_json, sort_keys=True))
                         else:
                             self.send_error(404, "File not found: %s " % self.path)
                     elif self.path.startswith("/image/") and self.path.endswith(".png"):
