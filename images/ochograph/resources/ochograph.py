@@ -278,7 +278,8 @@ def get_pods_details(is_local, output, hide_zookeeper_info, regex = "*", subset 
                       "2015-10-30 21:25:46,848 - DEBUG - http in -> /info",
                       "2015-10-30 21:25:55,128 - DEBUG - http in -> /info",
                       "2015-11-02 08:21:58,081 - DEBUG - http in -> /log"]
-            return lines, output
+            pods_details = {u'dev.cr-app #31': (31, lines, 200)}
+            return pods_details, output
     
         return pods_details, output
     else:
@@ -670,7 +671,7 @@ if __name__ == '__main__':
                                         info_formated = json.dumps(info, sort_keys=True, indent=2, separators=(',', ': '))
                                         self.wfile.write(self.escape_html(info_formated));
                                     except Exception:
-                                        logger.warn('Error reading logs', exc_info=True)
+                                        logger.warn('Error reading info', exc_info=True)
                                         self.wfile.write(self.escape_html(info));
                                 else:
                                     self.wfile.write('N/A')
@@ -693,7 +694,6 @@ if __name__ == '__main__':
                                 seq = int(pod_id[hash_pos + 1:])
                                 cluster = pod_id[0:hash_pos - 1]
                                 command_result = get_pods_details(is_local, "", True, cluster, [seq], command)[0]
-                                     
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/html")
                                 self.end_headers()
@@ -701,13 +701,14 @@ if __name__ == '__main__':
                                 self.wfile.write('<br/><br/><span class="modalSectionHeader">Logs:</span><br/>')
                                 if command_result:
                                     try:
-                                        #log_json = json.dumps(command_result, sort_keys=True, indent=2, separators=(',', ': '))                             
-                                        for one_log in command_result:
+                                        lines = command_result.values()[0][1]                  
+                                        for one_log in lines:
                                             self.wfile.write(self.escape_html(one_log));
                                             self.wfile.write("<br/>");
                                     except Exception:
                                         logger.warn('Error reading logs', exc_info=True)
-                                        self.wfile.write(self.escape_html(command_result));
+                                        self.wfile.write('N/A')
+                                        self.wfile.write("<br/>");
                                         
                                 else:
                                     self.wfile.write('N/A')
