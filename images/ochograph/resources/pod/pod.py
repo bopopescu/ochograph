@@ -52,6 +52,6 @@ if __name__ == '__main__':
 
         def configure(self, _):
 
-            return 'python ochograph.py -h', {}
+            return 'python ochograph.py -w', {}
 
     Pod().boot(Strategy)
