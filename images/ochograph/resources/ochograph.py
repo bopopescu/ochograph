@@ -7,18 +7,6 @@
 # The tool will first get the list of all pods from Zookeper and then  
 # get the necessary details for each pod by leveraging its REST API.
 #
-# For this tool to work, every single pod that has dependencies (i.e. the 
-# 'depends_on' variable of the Reactive class is not empty) must list its
-# dependencies as a list of "<cluster_name>" under the 'dependsOn' key of
-# the JSON returned by the sanity_check method, e.g.:
-#
-#        def sanity_check(self, pid):
-#            # Will result in something like "mysql"
-#            depends_on = cfg['db_cluster_name']
-#
-#            # Result would then be {'dependsOn': ["mysql"]}
-#            return {'dependsOn': [depends_on]}
-#
 import networkx as nx
 import json
 import fnmatch
@@ -41,7 +29,7 @@ from threading import Thread
 from requests.exceptions import Timeout as HTTPTimeout
 from networkx.readwrite import json_graph
 from SocketServer import ThreadingMixIn
-
+from subprocess import Popen, PIPE, STDOUT
 
 ROOT_NODE = "ROOT" 
 LOG_FILE = "ochograph.log"
@@ -82,6 +70,34 @@ def get_image_info(data):
 
 def is_png(data):
     return (data[:8] == '\211PNG\r\n\032\n'and (data[12:16] == 'IHDR'))
+
+# From Ochopod
+def shell(snippet, cwd=None, env=None):
+    """
+    Helper invoking a shell command and returning its stdout broken down by lines as a list. The sub-process
+    exit code is also returned. Please note we only pipe stdout (stderr being redirected to /dev/null).
+
+    :type snippet: str
+    :param snippet: shell snippet, e.g "echo foo > /bar"
+    :type env: dict
+    :param env: optional environment passed to POpen
+    :type cwd: str
+    :param cwd: optional working directory passed to POpen
+    :rtype: (int, list) 2-uple
+    """
+
+    out = []
+    pid = Popen('%s 2>/dev/null' % snippet, close_fds=True, shell=True, stdout=PIPE, stderr=None, cwd=cwd, env=env)
+    while True:
+        code = pid.poll()
+        line = pid.stdout.readline()
+        if not line and code is not None:
+            break
+        elif line:
+            out += [line.rstrip('\n')]
+
+    code = pid.returncode
+    return code, out
     
 # Lookup all pods registered in Zookeeper.
 def lookup_pods(zk_hosts, regex, subset=None):
@@ -441,13 +457,48 @@ if __name__ == '__main__':
             elif arg == '-w' or arg == '--web':
                 is_http = True
             arg_index += 1
+    # Try to read from /etc/mesos/zk
+    if not zk_hosts:        
+        def _1():
+
+            #
+            # - most recent DCOS release
+            # - $MESOS_MASTER is located in /opt/mesosphere/etc/mesos-slave-common
+            # - the snippet in there is prefixed by MESOS_ZK=zk://<ip:port>/mesos
+            #
+            logger.debug('checking /opt/mesosphere/etc/mesos-slave-common...')
+            _, lines = shell("grep MESOS_MASTER /opt/mesosphere/etc/mesos-slave-common")
+            return lines[0][18:].split('/')[0]
+
+        def _2():
+
+            #
+            # - same as above except for slightly older DCOS releases
+            # - $MESOS_MASTER is located in /opt/mesosphere/etc/mesos-slave
+            #
+            logger.debug('checking /opt/mesosphere/etc/mesos-slave...')
+            _, lines = shell("grep MESOS_MASTER /opt/mesosphere/etc/mesos-slave")
+            return lines[0][18:].split('/')[0]
+
+        def _3():
+
+            #
+            # - a regular package install will write the slave settings under /etc/mesos/zk (the snippet in
+            #   there looks like zk://10.0.0.56:2181/mesos)
+            #
+            logger.debug('checking /etc/mesos/zk...')
+            _, lines = shell("cat /etc/mesos/zk")
+            return lines[0][5:].split('/')[0]
+        
+        for method in [_1, _2, _3]:
+            try:
+                zk_hosts = method()
+                break
     
-    if not zk_hosts:
-        try:
-            with open('/etc/mesos/zk', 'r') as f:
-                content = f.readlines()[0]
-                zk_hosts = content[5:-7]
-        except:
+            except Exception:
+                pass
+        
+        if not zk_hosts:
             logger.warning("Could not guess Zookeeper host and port")
     
     

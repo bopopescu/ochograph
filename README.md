@@ -32,7 +32,7 @@ To generate an image, try:
 python ochograph.py -i my_image.png
 ```
 
-Ochograph will try to guess the Zookeeper host(s) by reading the /etc/mesos/zk file. You can force a given Zookeeper host with the -z paramater, e.g.:
+Ochograph will try to guess the Zookeeper host(s) by reading the /opt/mesosphere/etc/mesos-slave-common, /opt/mesosphere/etc/mesos-slave and /etc/mesos/zk files. You can force a given Zookeeper host with the -z paramater, e.g.:
 ```
 python ochograph.py -z 127.0.0.1:2181
 ```
@@ -47,6 +47,9 @@ python ochograph.py -z 127.0.0.1:2181
 ![Standalone mode](standalone_mode.png)
 
 ## Release notes
+
+### 0.2.1 (11/5/2015)
+- Try to guess Zookeeper host(s) by reading /opt/mesosphere/etc/mesos-slave-common and /opt/mesosphere/etc/mesos-slave (on top of /etc/mesos/zk)
 
 ### 0.2 (11/3/2015)
 - Get pods details (info and logs) in web mode by clicking the desired pod
