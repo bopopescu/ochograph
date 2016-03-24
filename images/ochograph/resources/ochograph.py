@@ -22,28 +22,27 @@ import cgi
 import BaseHTTPServer
 import urlparse
 
-from logging import DEBUG, Formatter
+from logging import Formatter
 from logging.handlers import RotatingFileHandler
 from kazoo.client import KazooClient
 from threading import Thread
 from requests.exceptions import Timeout as HTTPTimeout
 from networkx.readwrite import json_graph
 from SocketServer import ThreadingMixIn
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 
 ROOT_NODE = "ROOT" 
 LOG_FILE = "ochograph.log"
-LOG_LEVEL = DEBUG
 
 logger = logging.getLogger()
+
+logFormatter = Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
 # 1048576 Bytes = 1 MB 
 handler = RotatingFileHandler(LOG_FILE, maxBytes=1048576, backupCount=3)
-handler.setLevel(LOG_LEVEL)
-handler.setFormatter(Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-logger.addHandler(handler)
-logger.setLevel(LOG_LEVEL)
+handler.setFormatter(logFormatter)
 
-   
+logger.addHandler(handler)
 
     
 # See http://stackoverflow.com/questions/287871/print-in-terminal-with-colors-using-python
@@ -437,6 +436,9 @@ if __name__ == '__main__':
     is_local = False
     image_file = None
     is_http = False
+    root_path = ''
+    port_number = 9000
+    log_level = "WARNING"
     no_depends_on = set()
     
     if sys.argv:
@@ -447,7 +449,7 @@ if __name__ == '__main__':
                     zk_hosts = sys.argv[arg_index + 1]
                 except:
                     pass
-            if arg == '-i' or arg == '--image':
+            elif arg == '-i' or arg == '--image':
                 try:
                     image_file = sys.argv[arg_index + 1]
                 except:
@@ -456,7 +458,29 @@ if __name__ == '__main__':
                 is_local = True
             elif arg == '-w' or arg == '--web':
                 is_http = True
+            elif arg == '-r' or arg == '--rootpath':
+                try:
+                    root_path = sys.argv[arg_index + 1]
+                    if root_path.endswith("/"):
+                        root_path = root_path[:-1]
+                except:
+                    pass
+            elif arg == '-p' or arg == '--port':
+                try:
+                    port_number = int(sys.argv[arg_index + 1])
+                except:
+                    pass
+            elif arg == '--log':
+                try:
+                    log_level = sys.argv[arg_index + 1]
+                except:
+                    pass
             arg_index += 1
+            
+    logger.setLevel(log_level)  
+    for handler in logger.handlers:
+        handler.setLevel(log_level)
+            
     # Try to read from /etc/mesos/zk
     if not zk_hosts:        
         def _1():
@@ -587,8 +611,13 @@ if __name__ == '__main__':
     
     if is_http:
         
+        # Will make the logs visible in the Ochopod logs.
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setLevel(log_level)
+        consoleHandler.setFormatter(logFormatter)
+        logger.addHandler(consoleHandler)
+        
         HOST_NAME = ''
-        PORT_NUMBER = 9000
         
         class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             # See https://wiki.python.org/moin/EscapingHtml
@@ -623,7 +652,7 @@ if __name__ == '__main__':
                 
             # Thanks to http://patorjk.com/software/taag
             def write_nice_title(self):
-                self.wfile.write("<a href=\"/\" class=\"noLinkDeco\"><div class=\"title\">");
+                self.wfile.write("<a href=\"%s\" class=\"noLinkDeco\"><div class=\"title\">" % root_path if root_path else '/');
                 """
                 self.wfile.write(self.escape_html("    ____       _                                 _         \n"));
                 self.wfile.write(self.escape_html("   / __ \     | |                               | |        \n"));
@@ -647,26 +676,26 @@ if __name__ == '__main__':
             def do(self, method):
                 with_content = method != 'HEAD'
                 if method == 'GET' or method == 'HEAD':
-                    if self.path == '/':
+                    if self.path == '%s'  % root_path if root_path else '/':
                         self.send_response(200)
                         self.send_header("Content-type", "text/html")
                         self.end_headers()
                         if with_content:
                             self.wfile.write("<html><head><title>Ochograph</title>")
-                            self.wfile.write('<link rel="stylesheet" type="text/css" href="css/style.css">')
+                            self.wfile.write('<link rel="stylesheet" type="text/css" href="%s/css/style.css">' % root_path)
                             self.wfile.write('</head>')
                             self.wfile.write("<body>")
                             
                             self.write_nice_title();
                             
                             self.wfile.write("Visualize the dependencies and state of your Ochopod clusters in real-time.<br/><br/>")
-                            self.wfile.write('<a href="/image">Image mode</a><br/>')
-                            self.wfile.write('<a href="/text">Text mode</a>')
+                            self.wfile.write('<a href="%s/image">Image mode</a><br/>' % root_path)
+                            self.wfile.write('<a href="%s/text">Text mode</a>' % root_path)
                             self.wfile.write('<br/><br/><br/><span class="footer"><a href="https://github.com/pferrot/ochograph" target="_blank">Ochograph on GitHub</a></span><br/><br/>')
                             self.wfile.write("</body></html>")
-                    elif self.path.startswith("/data"):
+                    elif self.path.startswith("%s/data" % root_path):
                         up = urlparse.urlparse(self.path)
-                        if up.path == ('/data'):
+                        if up.path == ('%s/data' % root_path):
                             self.send_response(200)
                             self.send_header("Content-type", "application/json")
                             self.end_headers()
@@ -689,7 +718,7 @@ if __name__ == '__main__':
                                 self.wfile.write(json.dumps(result_json, sort_keys=True))
                         else:
                             self.send_error(404, "File not found: %s " % self.path)
-                    elif self.path.startswith("/image/") and self.path.endswith(".png"):
+                    elif self.path.startswith("%s/image/" % root_path) and self.path.endswith(".png"):
                         image_name = self.path[self.path.rfind("/")+1:]
                         if not os.path.exists(image_name):
                             self.send_error(404, "File not found: %s " % self.path)
@@ -707,11 +736,11 @@ if __name__ == '__main__':
                                 except:
                                     logger.error("Failed to remove file: %s" % image_name) 
                                     
-                    elif self.path.startswith('/pod/info'):
+                    elif self.path.startswith('%s/pod/info' % root_path):
                         try:
                             up = urlparse.urlparse(self.path)
                             command = up.path[up.path.rfind('/')+1:]
-                            if up.path == ('/pod/%s' % command):
+                            if up.path == ('%s/pod/%s' % (root_path, command)):
                                 qs = urlparse.parse_qs(up.query)
                                 pod_id = qs.get("podId")[0]
                                 hash_pos = pod_id.rfind("#")
@@ -747,11 +776,11 @@ if __name__ == '__main__':
                         except Exception:
                             logger.error('Error retrieving pod details', exc_info=True)
                             self.send_error(404, "File not found: %s " % self.path)
-                    elif self.path.startswith('/pod/log'):
+                    elif self.path.startswith('%s/pod/log' % root_path):
                         try:
                             up = urlparse.urlparse(self.path)
                             command = up.path[up.path.rfind('/')+1:]
-                            if up.path == ('/pod/%s' % command):
+                            if up.path == ('%s/pod/%s' % (root_path, command)):
                                 qs = urlparse.parse_qs(up.query)
                                 pod_id = qs.get("podId")[0]
                                 hash_pos = pod_id.rfind("#")
@@ -784,24 +813,24 @@ if __name__ == '__main__':
                         except Exception:
                             logger.error('Error retrieving pod details', exc_info=True)
                             self.send_error(404, "File not found: %s " % self.path)
-                    elif self.path.startswith('/text') or self.path.startswith('/image'):     
+                    elif self.path.startswith('%s/text' % root_path) or self.path.startswith('%s/image' % root_path):     
                         up = urlparse.urlparse(self.path)
-                        if up.path == '/image' or up.path == '/text':                    
+                        if up.path == ('%s/image' % root_path) or up.path == ('%s/text' % root_path):                    
                             qs = urlparse.parse_qs(up.query)
                             self.send_response(200)
                             self.send_header("Content-type", "text/html")
                             self.end_headers()
                             if with_content:
                                 self.wfile.write("<html><head><title>Ochograph</title>")
-                                self.wfile.write('<link rel="stylesheet" type="text/css" href="css/style.css">')
-                                self.wfile.write('<script src="javascript/javascript.js"></script>')
-                                self.wfile.write('<script src="javascript/javascript.js"></script>')
-                                self.wfile.write('<script src="javascript/jquery-1.11.3.min.js"></script>')
-                                self.wfile.write('<script src="javascript/jquery-ui-1.11.4.custom/jquery-ui.js"></script>')
-                                self.wfile.write('<link rel="stylesheet" type="text/css" href="javascript/jquery-ui-1.11.4.custom/jquery-ui.css">')
+                                self.wfile.write('<link rel="stylesheet" type="text/css" href="%s/css/style.css">' %  root_path)
+                                self.wfile.write('<script src="%s/javascript/javascript.js"></script>' % root_path)
+                                self.wfile.write('<script src="%s/javascript/javascript.js"></script>' % root_path)
+                                self.wfile.write('<script src="%s/javascript/jquery-1.11.3.min.js"></script>' % root_path)
+                                self.wfile.write('<script src="%s/javascript/jquery-ui-1.11.4.custom/jquery-ui.js"></script>' % root_path)
+                                self.wfile.write('<link rel="stylesheet" type="text/css" href="%s/javascript/jquery-ui-1.11.4.custom/jquery-ui.css">' % root_path)
                                 self.wfile.write('<script type="text/javascript">')
                                 self.wfile.write('$( document ).ready(function() {');
-                                self.wfile.write('  loadContent(%s);' % ('true' if up.path == '/image' else 'false'));                            
+                                self.wfile.write('  loadContent(%s, \'%s\');' % ('true' if up.path == ('%s/image' % root_path) else 'false', root_path));                            
                                 self.wfile.write('});');
                                 self.wfile.write('</script>')                                            
                                 self.wfile.write('</head>')
@@ -811,7 +840,7 @@ if __name__ == '__main__':
                                 self.wfile.write("</body></html>")
                         else:
                             self.send_error(404, "File not found: %s " % self.path)                           
-                    elif self.path == '/css/style.css':
+                    elif self.path == '%s/css/style.css' % root_path:
                         self.send_response(200)
                         self.send_header("Content-type", "text/css")
                         self.end_headers()      
@@ -819,27 +848,27 @@ if __name__ == '__main__':
                             f = open('css/style.css')
                             self.wfile.write(f.read())
                             f.close() 
-                    elif self.path == '/javascript/javascript.js' or self.path == '/javascript/jquery-1.11.3.min.js':
+                    elif self.path == ('%s/javascript/javascript.js' % root_path) or self.path == ('%s/javascript/jquery-1.11.3.min.js' % root_path):
                         self.send_response(200)
                         self.send_header("Content-type", "text/javascript")
                         self.end_headers()
                         if with_content:                    
-                            f = open(self.path[1:])
+                            f = open(self.path[1 + len(root_path):])
                             self.wfile.write(f.read())
                             f.close() 
-                    elif self.path.startswith('/javascript/jquery-ui-1.11.4.custom'):
-                        if os.path.isfile(self.path[1:]) and (self.path.endswith('.png') or self.path.endswith('.css') or self.path.endswith('.js')):
+                    elif self.path.startswith('%s/javascript/jquery-ui-1.11.4.custom' % root_path):
+                        if os.path.isfile(self.path[1 + len(root_path):]) and (self.path.endswith('.png') or self.path.endswith('.css') or self.path.endswith('.js')):
                             #file_name = self.path[self.path.rfind("/")+1]
                             self.send_response(200)
                             if self.path.endswith(".png"):
                                 self.send_header("Content-type", 'image/png')
-                                f = open(self.path[1:], 'rb')
+                                f = open(self.path[1 + len(root_path):], 'rb')
                             elif self.path.endswith(".css"):
                                 self.send_header("Content-type", "text/css")
-                                f = open(self.path[1:])
+                                f = open(self.path[1 + len(root_path):])
                             elif self.path.endswith(".js"):
                                 self.send_header("Content-type", "text/javascript")
-                                f = open(self.path[1:])
+                                f = open(self.path[1 + len(root_path):])
                             self.end_headers()
                             if with_content:
                                 self.wfile.write(f.read())
@@ -851,9 +880,9 @@ if __name__ == '__main__':
                 elif method == 'POST':
                     ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
                     if ctype == 'application/json':
-                        if self.path.startswith('/text/content') or self.path.startswith('/image/content'):
+                        if self.path.startswith('%s/text/content' % root_path) or self.path.startswith('%s/image/content' % root_path):
                             up = urlparse.urlparse(self.path)
-                            if up.path == '/image/content' or up.path == '/text/content':                    
+                            if up.path == '%s/image/content' % root_path or up.path == '%s/text/content' % root_path:                    
                                 qs = urlparse.parse_qs(up.query)
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/html")
@@ -867,10 +896,10 @@ if __name__ == '__main__':
                                     image_file = None
                                     self.wfile.write("<span class=\"small\" title=\"Last time a check was made in the background to see if what you see is still up-to-date.\">Last check date: <span id=\"lastCheckDate\"></span></span><br/>")
                                     self.wfile.write("<span class=\"small\" title=\"Last time what you see on the screen was updated, i.e. something changed in the pods settings.\">Last update date: <span id=\"lastUpdateDate\"></span></span><br/>")
-                                    if up.path == '/text/content':
-                                        self.wfile.write("<span class=\"small\"><a href=\"/image\">Go to image mode</a></span><br/><br/>")
-                                    elif up.path == '/image/content':
-                                        self.wfile.write("<span class=\"small\"><a href=\"/text\">Go to text mode</a></span><br/><br/>")
+                                    if up.path == ('%s/text/content' % root_path):
+                                        self.wfile.write("<span class=\"small\"><a href=\"%s/image\">Go to image mode</a></span><br/><br/>" % root_path)
+                                    elif up.path == ('%s/image/content' % root_path):
+                                        self.wfile.write("<span class=\"small\"><a href=\"%s/text\">Go to text mode</a></span><br/><br/>" % root_path)
                                         image_file = self.get_random_image_name()
                                         
                                     data_json = json.loads(data)
@@ -887,12 +916,12 @@ if __name__ == '__main__':
                                     # Allow clicking a pod in text mode as well.
                                     for n in graph.nodes():
                                         if n != ROOT_NODE:
-                                            output_escaped = output_escaped.replace(self.escape_html(n), ("<span class=\"textNodeLink\" onclick=\"nodeClicked('%s');\">" + self.escape_html(n) + "</span>") % n)
+                                            output_escaped = output_escaped.replace(self.escape_html(n), ("<span class=\"textNodeLink\" onclick=\"nodeClicked('%s', '%s');\">" + self.escape_html(n) + "</span>") % (n, root_path))
                                     
                                     self.wfile.write(output_escaped)
                                     if image_file and graph_generated:
                                         self.wfile.write("<br/><br/><br/>")
-                                        self.wfile.write('<img src="/image/%s" usemap="#map1"/>' % image_file)
+                                        self.wfile.write('<img src="%s/image/%s" usemap="#map1"/>' % (root_path, image_file))
                                         with open(image_file, 'rb') as f:
                                             data = f.read()
                                         image_info = get_image_info(data)                       
@@ -920,7 +949,7 @@ if __name__ == '__main__':
                                             y1 = y - (area_height / 2)
                                             x2 = x + (area_width / 2)
                                             y2 = y + (area_height / 2)
-                                            self.wfile.write('<area shape="rect" coords="%s,%s,%s,%s" href="javascript: void(0);" onclick="nodeClicked(\'%s\');">' % (int(x1), int(y1), int(x2), int(y2), node))
+                                            self.wfile.write('<area shape="rect" coords="%s,%s,%s,%s" href="javascript: void(0);" onclick="nodeClicked(\'%s\', \'%s\');">' % (int(x1), int(y1), int(x2), int(y2), node, root_path))
                                         self.wfile.write('</map')
                                         
                                         self.wfile.write("<br/><br/>")  
@@ -951,14 +980,14 @@ if __name__ == '__main__':
         class ThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
             """Handle requests in a separate thread."""
     
-        server = ThreadedHTTPServer((HOST_NAME, PORT_NUMBER), MyHandler)
-        logger.info("Server Starts - %s:%s" % (HOST_NAME, PORT_NUMBER))
+        server = ThreadedHTTPServer((HOST_NAME, port_number), MyHandler)
+        logger.info("Server Starts - %s:%s" % (HOST_NAME, port_number))
         try:            
             server.serve_forever()
         except KeyboardInterrupt:
             pass
         server.server_close()
-        logger.info("Server Stops - %s:%s" % (HOST_NAME, PORT_NUMBER))
+        logger.info("Server Stops - %s:%s" % (HOST_NAME, port_number))
     
     else:
         

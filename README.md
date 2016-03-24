@@ -48,6 +48,10 @@ python ochograph.py -z 127.0.0.1:2181
 
 ## Release notes
 
+### 0.2.2 (3/24/2016)
+- Allow to specify an optional base path for accessing Ochograph: this is convenient when you have a reverse proxy in front of Ochograph that exposes it through a subpath, e.g. http://myserver/ochograph (see the deployment descriptor file under /images/ochograph/ochothon_ochograph.yml for details)
+- Ochograph logs now visible in the Ochopod logs (i.e. pipe subprocess)
+
 ### 0.2.1 (11/5/2015)
 - Try to guess Zookeeper host(s) by reading /opt/mesosphere/etc/mesos-slave-common and /opt/mesosphere/etc/mesos-slave (on top of /etc/mesos/zk)
 

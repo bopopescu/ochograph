@@ -26,9 +26,9 @@ var autoReload = false;
 //    }
 //}
 
-function nodeClicked(node) {
+function nodeClicked(node, rootPath) {
     $.ajax({
-      url: '/pod/info',
+      url: rootPath + '/pod/info',
       data: {podId: node},
       cache: false
     })
@@ -36,7 +36,7 @@ function nodeClicked(node) {
         $("#theDialog").empty().append(html);
         // Once done retrieving the info, lets us get the logs.
         $.ajax({
-          url: '/pod/log',
+          url: rootPath + '/pod/log',
           data: {podId: node},
           cache: false
         })
@@ -82,10 +82,10 @@ function getNowFormated() {
 }
 
 var contentData = undefined;
-function loadContent(withImage) {
+function loadContent(withImage, rootPath) {
     $.ajax({
         dataType: "json",
-        url: '/data',
+        url: rootPath + '/data',
         cache: false,
         success: function (data) {
                     dataString = JSON.stringify(data);
@@ -93,10 +93,10 @@ function loadContent(withImage) {
                         contentData = dataString;
                         var theUrl = undefined;
                         if (withImage) {
-                            theUrl = '/image/content';
+                            theUrl = rootPath + '/image/content';
                         }
                         else {
-                            theUrl = '/text/content';
+                            theUrl = rootPath + '/text/content';
                         }
                         $.ajax({
                           url: theUrl,
@@ -121,7 +121,7 @@ function loadContent(withImage) {
             },
         complete: function() {
                 window.setTimeout(function() {
-                    loadContent(withImage);
+                    loadContent(withImage, rootPath);
                 }, reloadIntervalInSeconds * 1000);    
             }
     });

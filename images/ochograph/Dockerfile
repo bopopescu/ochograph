@@ -9,10 +9,10 @@ RUN apt-get -y install python-dev
 RUN apt-get -y install wget
 RUN apt-get -y install unzip
 
-RUN pip install matplotlib
-RUN pip install kazoo
-RUN pip install networkx
-RUN pip install pydot
+RUN pip install matplotlib==1.3.1
+RUN pip install kazoo==2.2.1
+RUN pip install networkx==1.10
+RUN pip install pydot==1.0.2
 # Say yes when prompted to uninstall.
 RUN /usr/bin/yes | pip uninstall pyparsing
 RUN pip install pyparsing==1.5.7

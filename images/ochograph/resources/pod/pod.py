@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import json
+import os
 import logging
 import time
 
@@ -24,12 +26,17 @@ logger = logging.getLogger('ochopod')
 
 
 if __name__ == '__main__':
+    
+    cfg = json.loads(os.environ['pod'])
 
     class Strategy(Piped):
 
         cwd = '/opt/ochograph'
         
         check_every = 60.0
+        
+        # So that we see the Ochograph logs in the Ochopod logs.
+        pipe_subprocess = True
 
         pid = None
 
@@ -52,6 +59,14 @@ if __name__ == '__main__':
 
         def configure(self, _):
 
-            return 'python ochograph.py -w', {}
+            root_path = cfg['root_path'] if 'root_path' in cfg.keys() else None
+            logger.debug("Using custom root path: %s" % root_path if root_path else "<no>")
+            
+            port_number = cfg['port_number'] if 'port_number' in cfg.keys() else None
+            logger.debug("Using custom port number: %s" % port_number if port_number else "<no>")
+            
+            log_level = cfg['log_level'] if 'log_level' in cfg.keys() else "WARNING"
+            
+            return 'python ochograph.py -w %s %s %s' % (("-r %s" % root_path if root_path else ""), ("-p %s" % port_number if port_number else ""), ("--log %s" % log_level)), {}
 
     Pod().boot(Strategy)

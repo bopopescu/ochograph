@@ -1,5 +1,5 @@
 cluster:  ochograph
-image:    autodeskls/ochograph:1.0.6_20151029154900CET_0.2.1
+image:    autodeskls/ochograph:1.0.6_20151029154900CET_0.2.2
 debug:    true
 ports:
   # Ochograph will be accessible on port 8080
@@ -15,3 +15,12 @@ verbatim:
   # TODO
   #acceptedResourceRoles:
   #  - slave_public
+  
+# Allow to specify an optional base path for accessing Ochograph. 
+# This is convenient when you have a reverse proxy in front of Ochograph that 
+# exposes it through a subpath (e.g. http://myserver/ochograph)
+# The default port (9000) can also be overriden.
+#settings:
+#  root_path: /ochograph
+#  port_number: 80
+#  log_level: DEBUG
