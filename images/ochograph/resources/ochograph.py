@@ -487,27 +487,27 @@ if __name__ == '__main__':
 
             #
             # - most recent DCOS release
-            # - $MESOS_MASTER is located in /opt/mesosphere/etc/mesos-slave-common
+            # - $MESOS_MASTER is located in /opt/mesosphere/etc/mesos-subordinate-common
             # - the snippet in there is prefixed by MESOS_ZK=zk://<ip:port>/mesos
             #
-            logger.debug('checking /opt/mesosphere/etc/mesos-slave-common...')
-            _, lines = shell("grep MESOS_MASTER /opt/mesosphere/etc/mesos-slave-common")
+            logger.debug('checking /opt/mesosphere/etc/mesos-subordinate-common...')
+            _, lines = shell("grep MESOS_MASTER /opt/mesosphere/etc/mesos-subordinate-common")
             return lines[0][18:].split('/')[0]
 
         def _2():
 
             #
             # - same as above except for slightly older DCOS releases
-            # - $MESOS_MASTER is located in /opt/mesosphere/etc/mesos-slave
+            # - $MESOS_MASTER is located in /opt/mesosphere/etc/mesos-subordinate
             #
-            logger.debug('checking /opt/mesosphere/etc/mesos-slave...')
-            _, lines = shell("grep MESOS_MASTER /opt/mesosphere/etc/mesos-slave")
+            logger.debug('checking /opt/mesosphere/etc/mesos-subordinate...')
+            _, lines = shell("grep MESOS_MASTER /opt/mesosphere/etc/mesos-subordinate")
             return lines[0][18:].split('/')[0]
 
         def _3():
 
             #
-            # - a regular package install will write the slave settings under /etc/mesos/zk (the snippet in
+            # - a regular package install will write the subordinate settings under /etc/mesos/zk (the snippet in
             #   there looks like zk://10.0.0.56:2181/mesos)
             #
             logger.debug('checking /etc/mesos/zk...')
